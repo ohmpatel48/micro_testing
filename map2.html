@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="MapApp">
+<head>
+  <meta charset="UTF-8">
+  <title>Map Picker with Geocoder Pointer & AngularJS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Geocoder CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+
+  <style>
+    body { font-family: sans-serif; }
+    #mapModal {
+      display: none;
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%; z-index: 999;
+      background-color: rgba(0,0,0,0.6);
+    }
+    .modal-content {
+      background: #fff; border-radius: 8px;
+      width: 90%; max-width: 700px;
+      margin: 5% auto; padding: 1rem;
+      position: relative;
+    }
+    #map { height: 400px; width: 100%; margin-top: 1rem; }
+    .btn {
+      padding: 8px 16px; margin: 0.5rem 0.5rem 0 0;
+      border: none; border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-primary { background: #007bff; color: white; }
+    .btn-apply   { background: #ffc107; color: white; }
+    .btn-ok      { background: #28a745; color: white; float: right; }
+    input { width: 120px; padding: 6px; margin-right: 0.5rem; }
+  </style>
+</head>
+<body ng-controller="MapController">
+
+  <button class="btn btn-primary" ng-click="openModal()">Select Location</button>
+
+  <div id="mapModal">
+    <div class="modal-content">
+      <h3>Pick a Location</h3>
+      <input type="text" ng-model="lat" placeholder="Latitude" readonly />
+      <input type="text" ng-model="lng" placeholder="Longitude" readonly />
+      <button class="btn btn-apply" ng-click="applyPosition()">Apply</button>
+      <div id="map"></div>
+      <button class="btn btn-ok" ng-click="saveCoordinates()">OK</button>
+    </div>
+  </div>
+
+  <!-- AngularJS 1.5.7 -->
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js"></script>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Geocoder JS -->
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+  <script>
+    angular.module('MapApp', [])
+      .controller('MapController', ['$scope', function($scope) {
+        'use strict';
+        let map, marker;
+        const defaultCenter = [-23.9608, -46.3331];  // Santos, SP
+        const defaultZoom   = 13;
+
+        $scope.lat = '';
+        $scope.lng = '';
+
+        $scope.openModal = function() {
+          document.getElementById('mapModal').style.display = 'block';
+          setTimeout(initMap, 100);
+        };
+
+        $scope.closeModal = function() {
+          document.getElementById('mapModal').style.display = 'none';
+        };
+
+        function initMap() {
+          if (!map) {
+            map = L.map('map', { zoomControl: false }).setView(defaultCenter, defaultZoom);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              maxZoom: 19,
+              attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            // initialize a single draggable marker
+            marker = L.marker(defaultCenter, { draggable: true }).addTo(map);
+
+            // update inputs on drag end
+            marker.on('dragend', function(e) {
+              const pos = e.target.getLatLng();
+              $scope.lat = pos.lat.toFixed(6);
+              $scope.lng = pos.lng.toFixed(6);
+              $scope.$apply();
+            });
+
+            // Geocoder setup with explicit handling for search results
+            L.Control.geocoder({ 
+              placeholder: 'Search address...',
+              defaultMarkGeocode: false // Prevent default marker behavior
+            })
+            .on('markgeocode', function(e) {
+              const center = e.geocode.center;
+              $scope.lat = center.lat.toFixed(6);
+              $scope.lng = center.lng.toFixed(6);
+              
+              // Move the existing marker and ensure it's draggable
+              marker.setLatLng(center).bindPopup(center).openPopup();
+              marker.dragging.enable(); // Explicitly enable dragging
+              
+              // Pan map to the location
+              map.setView(center, map.getZoom());
+              
+              $scope.$apply();
+            })
+            .addTo(map);
+
+            // click updates inputs
+            map.on('click', function(e) {
+              $scope.lat = e.latlng.lat.toFixed(6);
+              $scope.lng = e.latlng.lng.toFixed(6);
+              $scope.$apply();
+            });
+          } else {
+            map.invalidateSize();
+          }
+        }
+
+        // Move marker to coordinates from input fields
+        $scope.applyPosition = function() {
+          const lat = parseFloat($scope.lat);
+          const lng = parseFloat($scope.lng);
+          if (!isNaN(lat) && !isNaN(lng)) {
+            const newLatLng = L.latLng(lat, lng);
+            marker.setLatLng(newLatLng);
+            marker.dragging.enable(); // Always ensure dragging is enabled
+            map.setView(newLatLng, map.getZoom());
+          } else {
+            alert('Enter valid coordinates then click Apply.');
+          }
+        };
+
+        $scope.saveCoordinates = function() {
+          if ($scope.lat && $scope.lng) {
+            console.log(`Saved Location → Lat: ${$scope.lat}, Lng: ${$scope.lng}`);
+            $scope.closeModal();
+          } else {
+            alert('Please pick or search a location first.');
+          }
+        };
+      }]);
+  </script>
+</body>
+</html>

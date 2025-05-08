@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="MapApp">
+<head>
+  <meta charset="UTF-8">
+  <title>Map Picker with Google Maps & AngularJS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    #mapModal {
+      display: none;
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%; z-index: 999;
+      background-color: rgba(0,0,0,0.6);
+    }
+    .modal-content {
+      background: #fff; border-radius: 8px;
+      width: 90%; max-width: 700px;
+      margin: 5% auto; padding: 1rem;
+      position: relative;
+    }
+    #map { height: 400px; width: 100%; margin-top: 1rem; }
+    .btn {
+      padding: 8px 16px; margin: 0.5rem 0.5rem 0 0;
+      border: none; border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-primary { background: #007bff; color: white; }
+    .btn-apply { background: #ffc107; color: black; }
+    .btn-ok { background: #28a745; color: white; float: right; }
+    input { width: 120px; padding: 6px; margin-right: 0.5rem; }
+    
+    /* Search box styling */
+    .search-container {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 5;
+      width: 70%;
+      max-width: 400px;
+    }
+    #search-input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 2px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      border: none;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body ng-controller="MapController">
+
+  <button class="btn btn-primary" ng-click="openModal()">Select Location</button>
+
+  <div id="mapModal">
+    <div class="modal-content">
+      <h3>Pick a Location</h3>
+      <input type="text" ng-model="lat" placeholder="Latitude" readonly />
+      <input type="text" ng-model="lng" placeholder="Longitude" readonly />
+      <button class="btn btn-apply" ng-click="applyPosition()">Apply</button>
+      
+      <div style="position: relative;">
+        <div id="map"></div>
+      </div>
+      
+      <button class="btn btn-ok" ng-click="saveCoordinates()">OK</button>
+    </div>
+  </div>
+
+  <!-- AngularJS 1.5.7 -->
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js"></script>
+  
+  <script>
+    angular.module('MapApp', [])
+      .controller('MapController', ['$scope', function($scope) {
+        'use strict';
+        let map, marker, geocoder, searchBox;
+        const defaultCenter = {lat: -23.9608, lng: -46.3331};  // Santos, SP
+        const defaultZoom = 13;
+
+        $scope.lat = '';
+        $scope.lng = '';
+
+        $scope.openModal = function() {
+          document.getElementById('mapModal').style.display = 'block';
+          
+          // Initialize Google Maps after modal is displayed
+          if (typeof google === 'undefined') {
+            // Load Google Maps API dynamically
+            const script = document.createElement('script');
+            script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyDNGtjH1oykynJxvUgGAUnB7T63Ay7CqXw&libraries=places';
+            script.async = true;
+            script.defer = true;
+            script.onload = initMap;
+            document.head.appendChild(script);
+          } else {
+            setTimeout(initMap, 100);
+          }
+        };
+
+        $scope.closeModal = function() {
+          document.getElementById('mapModal').style.display = 'none';
+        };
+
+        function initMap() {
+          if (!map) {
+            // Create the map
+            map = new google.maps.Map(document.getElementById('map'), {
+              center: defaultCenter,
+              zoom: defaultZoom,
+              mapTypeControl: false
+            });
+            
+            // Create the geocoder
+            geocoder = new google.maps.Geocoder();
+            
+            // Create marker (draggable by default)
+            marker = new google.maps.Marker({
+              position: defaultCenter,
+              map: map,
+              draggable: true
+            });
+
+            // Create search box
+            const searchInput = document.createElement('input');
+            searchInput.id = 'search-input';
+            searchInput.type = 'text';
+            searchInput.placeholder = 'Search for locations...';
+            
+            const searchContainer = document.createElement('div');
+            searchContainer.className = 'search-container';
+            searchContainer.appendChild(searchInput);
+            
+            map.controls[google.maps.ControlPosition.TOP_LEFT].push(searchContainer);
+            
+            // Initialize the search box
+            searchBox = new google.maps.places.SearchBox(searchInput);
+            
+            // Bias search results toward current map viewport
+            map.addListener('bounds_changed', function() {
+              searchBox.setBounds(map.getBounds());
+            });
+            
+            // Listen for search box events
+            searchBox.addListener('places_changed', function() {
+              const places = searchBox.getPlaces();
+              
+              if (places.length === 0) {
+                return;
+              }
+              
+              const place = places[0];
+              
+              // If the place has a geometry, use it
+              if (place.geometry && place.geometry.location) {
+                // Update map position
+                map.setCenter(place.geometry.location);
+                
+                // Update marker position
+                marker.setPosition(place.geometry.location);
+                
+                // Update coordinates in the form
+                updateCoordinates(place.geometry.location);
+              }
+            });
+            
+            // Update coordinates when marker is dragged
+            marker.addListener('dragend', function() {
+              updateCoordinates(marker.getPosition());
+            });
+            
+            // Update coordinates when map is clicked
+            map.addListener('click', function(e) {
+              marker.setPosition(e.latLng);
+              updateCoordinates(e.latLng);
+            });
+          } else {
+            // If map already exists, just resize it
+            google.maps.event.trigger(map, 'resize');
+          }
+        }
+        
+        function updateCoordinates(position) {
+          $scope.lat = position.lat().toFixed(6);
+          $scope.lng = position.lng().toFixed(6);
+          $scope.$apply();
+        }
+
+        // Move marker to coordinates from input fields
+        $scope.applyPosition = function() {
+          const lat = parseFloat($scope.lat);
+          const lng = parseFloat($scope.lng);
+          
+          if (!isNaN(lat) && !isNaN(lng)) {
+            const position = new google.maps.LatLng(lat, lng);
+            marker.setPosition(position);
+            map.setCenter(position);
+          } else {
+            alert('Enter valid coordinates then click Apply.');
+          }
+        };
+
+        $scope.saveCoordinates = function() {
+          if ($scope.lat && $scope.lng) {
+            console.log(`Saved Location → Lat: ${$scope.lat}, Lng: ${$scope.lng}`);
+            $scope.closeModal();
+          } else {
+            alert('Please pick or search a location first.');
+          }
+        };
+      }]);
+  </script>
+</body>
+</html>

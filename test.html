@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="transactionApp">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Transaction History</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="test.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+    />
+    <style></style>
+  </head>
+  <body ng-controller="TransactionController">
+    <div class="test"></div>
+    <div class="card">
+      <div class="card-title">
+        <span class="heading">Transactions History</span>
+        <span class="refresh" ng-click="refresh()" style="cursor: pointer"
+          >Refresh</span
+        >
+      </div>
+      <div class="inputs-groups">
+        <div class="input-grp">
+          <div class="width-fill" style="position: relative">
+            <input
+              class="width-fill inputs-pad input-icon"
+              type="text"
+              placeholder="Search by name, email, id, etc."
+              ng-model="filters.searchTerm"
+              ng-change="onSearchInputChange()"
+              ng-focus="showSuggestionsDropdown()"
+              ng-blur="hideSuggestionsDropdown()"
+            />
+            <div
+              class="suggestions-dropdown"
+              ng-show="showSuggestions"
+              ng-if="filteredSuggestions.length > 0"
+            >
+              <div
+                class="suggestion-item"
+                ng-repeat="suggestion in filteredSuggestions"
+                ng-click="selectSuggestion(suggestion)"
+              >
+                {{ suggestion }}
+              </div>
+            </div>
+          </div>
+          <div class="date-input-grp">
+            <input
+              style="min-width: 153.6px"
+              class="inputs-pad fill-after-small"
+              type="date"
+              ng-model="filters.startDate"
+              placeholder="Start Date"
+            />
+            <input
+              style="min-width: 153.6px"
+              class="inputs-pad fill-after-small"
+              type="date"
+              ng-model="filters.endDate"
+              placeholder="End Date"
+            />
+          </div>
+          <select
+            ng-model="filters.testOption"
+            class="width-fill inputs-pad"
+            style="min-width: 153.6px"
+            ng-options="option for option in paidForOptions"
+            ng-init="filters.testOption = paidForOptions[0]"
+          ></select>
+        </div>
+        <div class="status-filter-grp">
+          <select
+            ng-model="filters.status"
+            class="status-filter inputs-pad"
+            ng-options="option for option in statusOptions"
+            ng-init="filters.status = statusOptions[0]"
+          ></select>
+          <span
+            class="status settled"
+            ng-if="filters.status !== 'Select Status'"
+          >
+            {{filters.status}}
+            <span class="close-btn" ng-click="filters.status = ''">X</span>
+          </span>
+        </div>
+        <div class="buttons-container">
+          <button ng-click="search()" class="filter-button-size search-button">
+            Search
+          </button>
+          <button ng-click="clearAll()" class="filter-button-size clear-button">
+            Clear all
+          </button>
+        </div>
+      </div>
+    </div>
+    <script>
+      angular.module("transactionApp", []).controller("TransactionController", [
+        "$scope",
+        function ($scope) {
+          $scope.filters = {
+            searchTerm: "",
+            startDate: "",
+            endDate: "",
+            testOption: "",
+            status: "",
+          };
+          $scope.paidForOptions = ["Paid For"];
+          $scope.statusOptions = ["Select Status"];
+          $scope.allSearchSuggestions = [];
+
+          angular.forEach($scope.transactions, function (tx) {
+            if ($scope.paidForOptions.indexOf(tx.paidFor) === -1) {
+              $scope.paidForOptions.push(tx.paidFor);
+            }
+            if ($scope.statusOptions.indexOf(tx.status) === -1) {
+              $scope.statusOptions.push(tx.status);
+            }
+            $scope.allSearchSuggestions.push(tx.name);
+            $scope.allSearchSuggestions.push(tx.email);
+            if (tx.orderId) {
+              $scope.allSearchSuggestions.push(tx.orderId);
+            }
+          });
+          $scope.allSearchSuggestions = [
+            ...new Set($scope.allSearchSuggestions),
+          ];
+          $scope.results = [];
+          $scope.filteredSuggestions = [];
+          $scope.showSuggestions = false;
+          $scope.onSearchInputChange = function () {
+            if (!$scope.filters.searchTerm) {
+              $scope.filteredSuggestions = [];
+              return;
+            }
+            var term = $scope.filters.searchTerm.toLowerCase();
+            $scope.filteredSuggestions = $scope.allSearchSuggestions.filter(
+              function (suggestion) {
+                return suggestion.toLowerCase().includes(term);
+              }
+            );
+            $scope.showSuggestions = true;
+          };
+          $scope.selectSuggestion = function (suggestion) {
+            $scope.filters.searchTerm = suggestion;
+            $scope.filteredSuggestions = [];
+            $scope.showSuggestions = false;
+            $scope.search();
+          };
+          $scope.showSuggestionsDropdown = function () {
+            if (
+              $scope.filteredSuggestions.length > 0 &&
+              $scope.filters.searchTerm
+            ) {
+              $scope.showSuggestions = true;
+            } else {
+              $scope.showSuggestions = false;
+            }
+          };
+          $scope.hideSuggestionsDropdown = function () {
+            $scope.suggestionBlurTimeout = setTimeout(function () {
+              $scope.showSuggestions = false;
+              $scope.$apply();
+            }, 150);
+          };
+          $scope.preventBlurHide = function () {
+            clearTimeout($scope.suggestionBlurTimeout);
+          };
+          $scope.search = function () {
+            if ($scope.filters.testOption === "Paid For") {
+              $scope.filters.testOption = "";
+            }
+            if ($scope.filters.status === "Select Status") {
+              $scope.filters.status = "";
+            }
+            $scope.results = $scope.transactions.filter(function (tx) {
+              var match = true;
+              if ($scope.filters.searchTerm) {
+                var term = $scope.filters.searchTerm.toLowerCase();
+                if (
+                  !(
+                    tx.name.toLowerCase().includes(term) ||
+                    tx.email.toLowerCase().includes(term) ||
+                    (tx.orderId && tx.orderId.toLowerCase().includes(term))
+                  )
+                ) {
+                  match = false;
+                }
+              }
+              if (
+                match &&
+                ($scope.filters.startDate || $scope.filters.endDate)
+              ) {
+                var txDate = new Date(tx.dateTime);
+                if ($scope.filters.startDate) {
+                  var startDate = new Date($scope.filters.startDate);
+                  if (txDate < startDate) match = false;
+                }
+                if ($scope.filters.endDate) {
+                  var endDate = new Date($scope.filters.endDate);
+                  if (txDate > endDate) match = false;
+                }
+              }
+              if (match && $scope.filters.testOption) {
+                if (tx.paidFor !== $scope.filters.testOption) match = false;
+              }
+              if (match && $scope.filters.status) {
+                if (
+                  tx.status.toLowerCase() !==
+                  $scope.filters.status.toLowerCase()
+                )
+                  match = false;
+              }
+              return match;
+            });
+            if ($scope.filters.testOption === "") {
+              $scope.filters.testOption = "Paid For";
+            }
+            if ($scope.filters.status === "") {
+              $scope.filters.status = "Select Status";
+            }
+          };
+          $scope.clearAll = function () {
+            $scope.filters = {
+              searchTerm: "",
+              startDate: "",
+              endDate: "",
+              testOption: "Paid For",
+              status: "Select Status",
+            };
+            $scope.results = [];
+            $scope.filteredSuggestions = [];
+            $scope.showSuggestions = false;
+          };
+          $scope.refresh = function () {
+            $scope.search();
+          };
+        },
+      ]);
+    </script>
+  </body>
+</html>

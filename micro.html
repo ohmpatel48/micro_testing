@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html ng-app="app">
+<head>
+  <meta charset="UTF-8">
+  <title>AngularJS + React Microfrontend Test</title>
+  <!-- AngularJS -->
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
+  <!-- Microfrontend bundle -->
+  <script src="./assets/microfrontend.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Microfrontend Test</h1>
+    <!-- Use React widgets -->
+    <react-widget widget-name="HelloWidget"></react-widget>
+    <react-widget widget-name="GoodbyeWidget"></react-widget>
+  </div>
+
+  <script>
+    // Define AngularJS module and directive
+    angular.module('app').directive('reactDateTimePicker', function () {
+  return {
+    restrict: 'E',
+    scope: {
+      onChange: '&',
+    },
+    link: function (scope, element) {
+      const handleChange = (value) => {
+        scope.$apply(() => {
+          scope.onChange({ value });
+        });
+      };
+
+      ReactDOM.render(
+        React.createElement(DateTimePickerComponent, { onChange: handleChange }),
+        element[0]
+      );
+
+      scope.$on('$destroy', function () {
+        ReactDOM.unmountComponentAtNode(element[0]);
+      });
+    },
+  };
+});
+
+  </script>
+</body>
+</html>

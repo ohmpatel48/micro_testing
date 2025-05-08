@@ -1,0 +1,241 @@
+body {
+  background-color: #f5f5f5;
+  font-family: "Inter";
+}
+
+.buttons-container {
+  display: flex;
+  gap: 12px;
+}
+
+.card {
+  margin: 10px 0 0 0;
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  padding: 20px 24px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  height: fit-content;
+  gap: 16px;
+  width: -webkit-fill-available;
+}
+
+.card-title {
+  display: flex;
+  justify-content: space-between;
+}
+
+.status {
+  padding: 5px 10px;
+  border-radius: 15px;
+  border: 1px solid #ffffff;
+  font-family: Inter;
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+}
+
+.settled {
+  background: #eeeeee;
+  color: #616161;
+}
+
+.inputs-pad {
+  border-radius: 4px;
+  border-width: 1px;
+  justify-content: space-between;
+  padding-top: 4px;
+  padding-right: 12px;
+  padding-bottom: 4px;
+  padding-left: 12px;
+  border: 1px solid #e0e0e0;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.inputs-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.close-btn {
+  display: inline-flex;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  margin: 0 0 0 6px;
+  justify-content: center;
+  align-items: center;
+  background: #757575;
+  color: white;
+}
+
+.input-grp {
+  height: 32px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.status-filter-grp {
+  height: 32px;
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+}
+
+.status-filter {
+  width: 280px;
+}
+
+.date-input-grp {
+  display: flex;
+  gap: 8px;
+}
+
+.width-fill {
+  width: -webkit-fill-available;
+}
+
+.test {
+  width: 280px;
+  height: 100%;
+}
+
+.material-icons {
+  position: absolute;
+  font-size: 20px;
+}
+
+.input-icon {
+  height: -webkit-fill-available;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="15" height="15" viewBox="0 0 50 50"><path d="M 21 3 C 11.601563 3 4 10.601563 4 20 C 4 29.398438 11.601563 37 21 37 C 24.355469 37 27.460938 36.015625 30.09375 34.34375 L 42.375 46.625 L 46.625 42.375 L 34.5 30.28125 C 36.679688 27.421875 38 23.878906 38 20 C 38 10.601563 30.398438 3 21 3 Z M 21 7 C 28.199219 7 34 12.800781 34 20 C 34 27.199219 28.199219 33 21 33 C 13.800781 33 8 27.199219 8 20 C 8 12.800781 13.800781 7 21 7 Z"></path></svg>') no-repeat 10px center;
+  padding-left: 35px;
+}
+
+select:focus {
+  outline: none;
+}
+
+input:focus {
+  outline: none;
+}
+
+.fill-after-small {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  /* Add custom arrow icon */
+  /* background: url("arrow-icon.png") no-repeat right 10px center; */
+  /* background-size: 16px 16px; */
+  /* padding-right: 2.5rem; Adjust padding to make room for the icon */
+  width: fit-content;
+}
+
+.heading {
+  font-family: Inter;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 19.36px;
+}
+
+.refresh {
+  font-family: Inter;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.filter-button-size {
+  width: fit-content;
+  height: 32px;
+  gap: 10px;
+  background-color: transparent;
+  border-radius: 4px;
+  padding-top: 6px;
+  padding-right: 12px;
+  padding-bottom: 6px;
+  padding-left: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0%;
+}
+
+.clear-button {
+  border: 1px solid #e0e0e0;
+}
+
+.search-button {
+  background-color: #0f6cbd;
+  color: white;
+  border: none;
+}
+
+.suggestions-dropdown {
+  position: absolute;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-top: none;
+  width: calc(100% - 2px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.suggestion-item {
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.suggestion-item:hover {
+  background-color: #f0f0f0;
+}
+
+/* Style for placeholder/label option in dropdowns */
+.dropdown-label {
+  color: #999;
+  /* Grey color to indicate label */
+  /* font-style: italic;  Optional: Italic style - you can choose to keep or remove */
+}
+
+@media (max-width: 768px) {
+  .test {
+    width: 0;
+  }
+}
+
+@media (max-width: 812px) {
+  .input-grp {
+    flex-wrap: wrap;
+    height: unset;
+    gap: 12px;
+  }
+
+  .status-filter-grp {
+    height: unset;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .status-filter {
+    width: 100%;
+  }
+
+  .date-input-grp {
+    width: 100%;
+  }
+
+  .fill-after-small {
+    width: -webkit-fill-available;
+  }
+
+  .inputs-pad {
+    height: 32px;
+  }
+}
