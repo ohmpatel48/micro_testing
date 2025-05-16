@@ -5,44 +5,65 @@
   <title>AngularJS + React Microfrontend Test</title>
   <!-- AngularJS -->
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
-  <!-- Microfrontend bundle -->
-  <script src="./assets/microfrontend.js"></script>
+  <!-- React Microfrontend (LOCAL) -->
+  <script src="http://localhost:3001/microfrontend.js"></script>
 </head>
-<body>
+<body ng-controller="MainCtrl">
   <div class="container">
     <h1>Microfrontend Test</h1>
-    <!-- Use React widgets -->
-    <react-widget widget-name="HelloWidget"></react-widget>
-    <react-widget widget-name="GoodbyeWidget"></react-widget>
+
+    <!-- Pass parent typedText into the directive via two-way binding -->
+    <react-widget
+      widget-name="HelloWidget"
+      typed-text="typedText">
+    </react-widget>
+
+    <!-- This will update as you type in the React input -->
+    <p>Text typed in React input: {{typedText}}</p>
+
+    <react-widget
+      widget-name="GoodbyeWidget"
+      typed-text="typedText">
+    </react-widget>
   </div>
 
   <script>
-    // Define AngularJS module and directive
-    angular.module('app').directive('reactDateTimePicker', function () {
-  return {
-    restrict: 'E',
-    scope: {
-      onChange: '&',
-    },
-    link: function (scope, element) {
-      const handleChange = (value) => {
-        scope.$apply(() => {
-          scope.onChange({ value });
-        });
-      };
+    angular.module('app', [])
+      .controller('MainCtrl', function($scope) {
+        $scope.typedText = '';
+      })
+      .directive('reactWidget', function () {
+        return {
+          restrict: 'E',
+          scope: {
+            widgetName: '@',
+            typedText: '=',    // two-way binding back to parent
+          },
+          link: function (scope, element) {
+            if (window.MyMicrofrontend && typeof window.MyMicrofrontend.mount === 'function') {
+              window.MyMicrofrontend.mount(
+                scope.widgetName,
+                element[0],
+                {
+                  onTextChange: function(text) {
+                    // update directive scope and propagate to parent
+                    scope.$apply(() => {
+                      scope.typedText = text;
+                    });
+                  }
+                }
+              );
+            }
 
-      ReactDOM.render(
-        React.createElement(DateTimePickerComponent, { onChange: handleChange }),
-        element[0]
-      );
-
-      scope.$on('$destroy', function () {
-        ReactDOM.unmountComponentAtNode(element[0]);
+            scope.$on('$destroy', function () {
+              if (window.MyMicrofrontend && typeof window.MyMicrofrontend.unmount === 'function') {
+                window.MyMicrofrontend.unmount(element[0]);
+              }
+            });
+          },
+        };
       });
-    },
-  };
-});
-
   </script>
 </body>
 </html>
+  

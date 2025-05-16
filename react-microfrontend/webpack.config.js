@@ -1,8 +1,7 @@
 const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
-  mode: 'production',
+  mode: 'development', // Set to development for auto rebuild
   entry: './src/index.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -10,7 +9,8 @@ module.exports = {
     library: 'MyMicrofrontend',
     libraryTarget: 'umd',
     umdNamedDefine: true,
-    globalObject: 'this'
+    globalObject: 'this',
+    publicPath: 'http://localhost:3001/' // Important for remote loading
   },
   module: {
     rules: [
@@ -24,10 +24,15 @@ module.exports = {
   resolve: {
     extensions: ['.js', '.jsx']
   },
-  plugins: [
-    new HtmlWebpackPlugin({
-      template: './src/index.html',
-      inject: false
-    })
-  ]
+  devServer: {
+    static: {
+      directory: path.resolve(__dirname, 'dist'),
+    },
+    compress: true,
+    port: 3001,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+    },
+    hot: true,
+  }
 };
