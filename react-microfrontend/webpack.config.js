@@ -18,6 +18,13 @@ module.exports = {
         test: /\.jsx?$/,
         exclude: /node_modules/,
         use: 'babel-loader'
+      },
+      {
+        test: /\.css$/i,                  // match all .css files :contentReference[oaicite:0]{index=0}
+        use: [
+          'style-loader',                 // injects into <style> tags :contentReference[oaicite:1]{index=1}
+          'css-loader'                    // resolves @import and url() :contentReference[oaicite:2]{index=2}
+        ]
       }
     ]
   },

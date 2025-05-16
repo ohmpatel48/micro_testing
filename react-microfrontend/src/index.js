@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { HelloWidget, GoodbyeWidget } from './app';
 
 
+
 const components = {
   HelloWidget,
   GoodbyeWidget
